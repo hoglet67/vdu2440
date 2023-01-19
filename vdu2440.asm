@@ -165,17 +165,17 @@ ENDIF
             EQUB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FC
 
 .L5300
-	EQUB <L5342,<L530A,<L5323,<L537D,<L5343,<L534A,<L536D,<L5374
-	EQUB <L5378,<L535C
+            EQUB <L5342,<L530A,<L5323,<L537D,<L5343,<L534A,<L536D,<L5374
+            EQUB <L5378,<L535C
 
 ;            EQUB $42,$0A,$23,$7D,$43,$4A,$6D,$74
 ;            EQUB $78,$5C
 
 .L530A
-	dec L00E0
-	bpl L530B
-	lda #39
-	sta L00E0
+            dec L00E0
+            bpl L530B
+            lda #39
+            sta L00E0
 .L530B
             dec L00E1              ; C6 E1
             bpl L5312              ; 10 04
@@ -192,12 +192,12 @@ ENDIF
             bmi L5342              ; 30 1F
 
 .L5323
-	inc L00E0
-	lda L00E0
-	cmp #40
-	bne L5324
-	lda #0
-	sta L00E0
+            inc L00E0
+            lda L00E0
+            cmp #40
+            bne L5324
+            lda #0
+            sta L00E0
 .L5324
             inc L00E1              ; E6 E1
             lda L00E1              ; A5 E1
@@ -244,7 +244,7 @@ ENDIF
 .L536D      lda #$00               ; A9 00
             sta L00E1              ; 85 E1
             sta L00DE              ; 85 DE
-	sta L00E0
+            sta L00E0
             rts                    ; 60
 
 .L5374      ldx L008D              ; A6 8D
@@ -822,10 +822,10 @@ ENDIF
             lda #$1E               ; A9 1E
             sta L008E              ; 85 8E
 
-	lda #$14		; Switch to VDU40x24
-	jsr LFFF4
-	lda #$1b		; Execute ESCAPE
-	jsr LFFF4
+            lda #$14                ; Switch to VDU40x24
+            jsr LFFF4
+            lda #$1b                ; Execute ESCAPE
+            jsr LFFF4
 
             rts                    ; 60
 
