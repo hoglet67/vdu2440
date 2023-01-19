@@ -66,7 +66,7 @@ ELSE
 ENDIF
 
 
-.L5000
+.font_data
             EQUB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
             EQUB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
             EQUB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
@@ -164,14 +164,19 @@ ENDIF
             EQUB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
             EQUB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FC
 
-.L5300
-            EQUB <L5342,<L530A,<L5323,<L537D,<L5343,<L534A,<L536D,<L5374
-            EQUB <L5378,<L535C
+.ctrl_table
+            EQUB <do_rts
+            EQUB <ctrl_08
+            EQUB <ctrl_09
+            EQUB <ctrl_0A
+            EQUB <ctrl_0B
+            EQUB <ctrl_0C
+            EQUB <ctrl_0D
+            EQUB <ctrl_0E
+            EQUB <ctrl_0F
+            EQUB <ctrl_1E
 
-;            EQUB $42,$0A,$23,$7D,$43,$4A,$6D,$74
-;            EQUB $78,$5C
-
-.L530A
+.ctrl_08
             dec L00E0
             bpl L530B
             lda #39
@@ -183,15 +188,15 @@ ENDIF
             sta L00E1              ; 85 E1
 .L5312      beq L5316              ; F0 02
             dec L00DE              ; C6 DE
-.L5316      bpl L5342              ; 10 2A
+.L5316      bpl do_rts             ; 10 2A
             lda L008E              ; A5 8E
             sec                    ; 38
             sbc #$01               ; E9 01
             sta L00DE              ; 85 DE
             dec L00DF              ; C6 DF
-            bmi L5342              ; 30 1F
+            bmi do_rts             ; 30 1F
 
-.L5323
+.ctrl_09
             inc L00E0
             lda L00E0
             cmp #40
@@ -205,24 +210,24 @@ ENDIF
             beq L532D              ; F0 02
             inc L00DE              ; E6 DE
 .L532D      cmp #$04               ; C9 04
-            bcc L5342              ; 90 11
+            bcc do_rts             ; 90 11
             lda #$00               ; A9 00
             sta L00E1              ; 85 E1
             lda L00DE              ; A5 DE
             cmp L008E              ; C5 8E
-            bcc L5342              ; 90 07
-            jsr L537D              ; 20 7D 53
+            bcc do_rts             ; 90 07
+            jsr ctrl_0A            ; 20 7D 53
             lda #$00               ; A9 00
             sta L00DE              ; 85 DE
 
-.L5342      rts                    ; 60
+.do_rts     rts                    ; 60
 
-.L5343      dec L00DF              ; C6 DF
+.ctrl_0B    dec L00DF              ; C6 DF
             bmi L5349              ; 30 02
             inc L00DF              ; E6 DF
 .L5349      rts                    ; 60
 
-.L534A      lda L008D              ; A5 8D
+.ctrl_0C    lda L008D              ; A5 8D
             clc                    ; 18
             adc #$7F               ; 69 7F
             sta L00DF              ; 85 DF
@@ -232,29 +237,29 @@ ENDIF
             dec L00DF              ; C6 DF
             bmi L5355              ; 30 F9
 
-.L535C      lda #$F0               ; A9 F0
+.ctrl_1E    lda #$F0               ; A9 F0
             sta LB000              ; 8D 00 B0
             lda #$80               ; A9 80
             sta L00DF              ; 85 DF
             lda L00E6              ; A5 E6
-            bmi L536D              ; 30 04
+            bmi ctrl_0D              ; 30 04
             lda L008D              ; A5 8D
             sta L00E6              ; 85 E6
 
-.L536D      lda #$00               ; A9 00
+.ctrl_0D    lda #$00               ; A9 00
             sta L00E1              ; 85 E1
             sta L00DE              ; 85 DE
             sta L00E0
             rts                    ; 60
 
-.L5374      ldx L008D              ; A6 8D
+.ctrl_0E    ldx L008D              ; A6 8D
             bpl L537A              ; 10 02
 
-.L5378      ldx #$80               ; A2 80
+.ctrl_0F    ldx #$80               ; A2 80
 .L537A      stx L00E6              ; 86 E6
             rts                    ; 60
 
-.L537D      ldy L00E6              ; A4 E6
+.ctrl_0A    ldy L00E6              ; A4 E6
             bmi L538D              ; 30 0C
             dey                    ; 88
             bne L538B              ; D0 07
@@ -268,7 +273,7 @@ ENDIF
             tax                    ; AA
             cpx L00DF              ; E4 DF
             beq L539B              ; F0 03
-            bcc L535C              ; 90 C2
+            bcc ctrl_1E              ; 90 C2
             rts                    ; 60
 
 .L539B      lda L00DE              ; A5 DE
@@ -369,7 +374,7 @@ ENDIF
             cmp #$7F               ; C9 7F
             beq L5489              ; F0 5E
             jsr L5494              ; 20 94 54
-            jsr L5323              ; 20 23 53
+            jsr ctrl_09            ; 20 23 53
 .L5431      ldy #$E0               ; A0 E0
             lda L00E1              ; A5 E1
             beq L5462              ; F0 2B
@@ -414,14 +419,14 @@ ENDIF
             jsr LFEC5              ; 20 C5 FE
             bne L5470              ; D0 F6
 
-            lda L5300,X            ; BD 00 53
+            lda ctrl_table,X       ; BD 00 53
             sta L00E2              ; 85 E2
-            lda #>L5300               ; A9 53
+            lda #>ctrl_table       ; A9 53
             sta L00E3              ; 85 E3
             jsr LFEC1              ; 20 C1 FE
             jmp L5431              ; 4C 31 54
 
-.L5489      jsr L530A              ; 20 0A 53
+.L5489      jsr ctrl_08            ; 20 0A 53
             lda #$20               ; A9 20
             jsr L5494              ; 20 94 54
             jmp L5431              ; 4C 31 54
@@ -441,7 +446,7 @@ ENDIF
             lsr A                  ; 4A
             lsr A                  ; 4A
             clc                    ; 18
-            adc #>(L5000-1)        ; 69 4F
+            adc #>(font_data-1)    ; 69 4F
             sta L00E3              ; 85 E3
             ldy #$00               ; A0 00
             lda L00E1              ; A5 E1
@@ -539,8 +544,8 @@ ENDIF
 .L554F      eor #$80               ; 49 80
 .L5551      rts                    ; 60
 
-.L5552      lda #>L5000               ; A9 50
-            ldy #<L5000               ; A0 00
+.L5552      lda #>font_data        ; A9 50
+            ldy #<font_data        ; A0 00
             sta L00E3              ; 85 E3
             sty L00E2              ; 84 E2
             lda L00E1              ; A5 E1
@@ -666,7 +671,7 @@ ENDIF
             sty L00E2              ; 84 E2
             inc L00E3              ; E6 E3
             lda L00E3              ; A5 E3
-            cmp #>L5300               ; C9 53
+            cmp #>ctrl_table       ; C9 53
             bcc L5636              ; 90 01
             tya                    ; 98
 .L5636      rts                    ; 60
