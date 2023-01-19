@@ -490,7 +490,7 @@ ENDIF
             lsr A                  ; 4A
             lsr A                  ; 4A
             clc                    ; 18
-            adc #>(font_data-1)    ; 69 4F
+            adc #(>font_data)-1    ; 69 4F
             sta L00E3              ; 85 E3
             ldy #$00               ; A0 00
             lda L00E1              ; A5 E1
