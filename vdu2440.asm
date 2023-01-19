@@ -165,6 +165,7 @@ ENDIF
             EQUB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FC
 
 .ctrl_table
+
             EQUB <do_rts
             EQUB <ctrl_08
             EQUB <ctrl_09
@@ -177,39 +178,42 @@ ENDIF
             EQUB <ctrl_1E
 
 .ctrl_08
+{
             dec L00E0
-            bpl L530B
+            bpl L1
             lda #39
             sta L00E0
-.L530B
+.L1
             dec L00E1              ; C6 E1
-            bpl L5312              ; 10 04
+            bpl L2                 ; 10 04
             lda #$03               ; A9 03
             sta L00E1              ; 85 E1
-.L5312      beq L5316              ; F0 02
+.L2         beq L3                 ; F0 02
             dec L00DE              ; C6 DE
-.L5316      bpl do_rts             ; 10 2A
+.L3         bpl do_rts             ; 10 2A
             lda L008E              ; A5 8E
             sec                    ; 38
             sbc #$01               ; E9 01
             sta L00DE              ; 85 DE
             dec L00DF              ; C6 DF
             bmi do_rts             ; 30 1F
+}
 
 .ctrl_09
+{
             inc L00E0
             lda L00E0
             cmp #40
-            bne L5324
+            bne L1
             lda #0
             sta L00E0
-.L5324
+.L1
             inc L00E1              ; E6 E1
             lda L00E1              ; A5 E1
             cmp #$01               ; C9 01
-            beq L532D              ; F0 02
+            beq L2                 ; F0 02
             inc L00DE              ; E6 DE
-.L532D      cmp #$04               ; C9 04
+.L2         cmp #$04               ; C9 04
             bcc do_rts             ; 90 11
             lda #$00               ; A9 00
             sta L00E1              ; 85 E1
@@ -219,64 +223,87 @@ ENDIF
             jsr ctrl_0A            ; 20 7D 53
             lda #$00               ; A9 00
             sta L00DE              ; 85 DE
-
+}
 .do_rts     rts                    ; 60
 
-.ctrl_0B    dec L00DF              ; C6 DF
-            bmi L5349              ; 30 02
+.ctrl_0B
+{
+            dec L00DF              ; C6 DF
+            bmi L1                 ; 30 02
             inc L00DF              ; E6 DF
-.L5349      rts                    ; 60
+.L1         rts                    ; 60
+}
 
-.ctrl_0C    lda L008D              ; A5 8D
+.ctrl_0C
+{
+            lda L008D              ; A5 8D
             clc                    ; 18
             adc #$7F               ; 69 7F
             sta L00DF              ; 85 DF
             ldy #$00               ; A0 00
             sty L00DE              ; 84 DE
-.L5355      jsr L53C3              ; 20 C3 53
+.L1         jsr clear_row          ; 20 C3 53
             dec L00DF              ; C6 DF
-            bmi L5355              ; 30 F9
+            bmi L1                 ; 30 F9
+}           ;; fall through to
 
-.ctrl_1E    lda #$F0               ; A9 F0
+.ctrl_1E
+{           lda #$F0               ; A9 F0
             sta LB000              ; 8D 00 B0
             lda #$80               ; A9 80
             sta L00DF              ; 85 DF
             lda L00E6              ; A5 E6
-            bmi ctrl_0D              ; 30 04
+            bmi ctrl_0D            ; 30 04
             lda L008D              ; A5 8D
             sta L00E6              ; 85 E6
+}           ;; fall through to
 
-.ctrl_0D    lda #$00               ; A9 00
+.ctrl_0D
+{
+            lda #$00               ; A9 00
             sta L00E1              ; 85 E1
             sta L00DE              ; 85 DE
             sta L00E0
             rts                    ; 60
+}
 
-.ctrl_0E    ldx L008D              ; A6 8D
-            bpl L537A              ; 10 02
+.ctrl_0E
+{
+            ldx L008D              ; A6 8D
+            bpl store_E6           ; 10 02
+}
 
-.ctrl_0F    ldx #$80               ; A2 80
-.L537A      stx L00E6              ; 86 E6
+.ctrl_0F
+{
+            ldx #$80               ; A2 80
+}
+
+.store_E6
+{
+            stx L00E6              ; 86 E6
             rts                    ; 60
+}
 
-.ctrl_0A    ldy L00E6              ; A4 E6
-            bmi L538D              ; 30 0C
+.ctrl_0A
+{
+            ldy L00E6              ; A4 E6
+            bmi L3                 ; 30 0C
             dey                    ; 88
-            bne L538B              ; D0 07
-.L5384      jsr LFE71              ; 20 71 FE
-            bcs L5384              ; B0 FB
+            bne L2                 ; D0 07
+.L1         jsr LFE71              ; 20 71 FE
+            bcs L1                 ; B0 FB
             ldy L008D              ; A4 8D
-.L538B      sty L00E6              ; 84 E6
-.L538D      inc L00DF              ; E6 DF
+.L2         sty L00E6              ; 84 E6
+.L3         inc L00DF              ; E6 DF
             lda L008D              ; A5 8D
             ora #$80               ; 09 80
             tax                    ; AA
             cpx L00DF              ; E4 DF
-            beq L539B              ; F0 03
-            bcc ctrl_1E              ; 90 C2
+            beq L4                 ; F0 03
+            bcc ctrl_1E            ; 90 C2
             rts                    ; 60
 
-.L539B      lda L00DE              ; A5 DE
+.L4         lda L00DE              ; A5 DE
             pha                    ; 48
             ldy #$81               ; A0 81
             sty L00DF              ; 84 DF
@@ -285,35 +312,38 @@ ENDIF
             ldy #$00               ; A0 00
             sty L00DE              ; 84 DE
             sty L00E2              ; 84 E2
-.L53AB      lda (L00DE),Y          ; B1 DE
+.L5         lda (L00DE),Y          ; B1 DE
             sta (L00E2),Y          ; 91 E2
             iny                    ; C8
-            bne L53AB              ; D0 F9
+            bne L5                 ; D0 F9
             inc L00DF              ; E6 DF
             inc L00E3              ; E6 E3
             cpx L00DF              ; E4 DF
-            bne L53AB              ; D0 F1
+            bne L5                 ; D0 F1
             dec L00DF              ; C6 DF
-            jsr L53C3              ; 20 C3 53
+            jsr clear_row          ; 20 C3 53
             pla                    ; 68
             sta L00DE              ; 85 DE
             rts                    ; 60
+}
 
-.L53C3      bit L008F              ; 24 8F
-            bmi L53C8              ; 30 01
+.clear_row
+{           bit L008F              ; 24 8F
+            bmi L1                 ; 30 01
             dey                    ; 88
-.L53C8      tya                    ; 98
+.L1         tya                    ; 98
             ldy #$00               ; A0 00
-.L53CB      sta (L00DE),Y          ; 91 DE
+.L2         sta (L00DE),Y          ; 91 DE
             iny                    ; C8
-            bne L53CB              ; D0 FB
+            bne L2                 ; D0 FB
             rts                    ; 60
+}
 
 ;--------------------------------------------
 ; Write vector #208
 ;--------------------------------------------
 
-.L53D2
+.vdu_wrch
             jsr LFEFB              ; 20 FB FE
             php                    ; 08
             pha                    ; 48
@@ -680,7 +710,8 @@ ENDIF
 ; Read vector #20A
 ;--------------------------------------------
 
-.L5637      php                    ; 08
+.vdu_rdch
+            php                    ; 08
             cld                    ; D8
             stx L00E4              ; 86 E4
             sty L00E5              ; 84 E5
@@ -735,7 +766,7 @@ ENDIF
 .L5692      cpy #$00               ; C0 00
             bne L5698              ; D0 02
             sty L0053              ; 84 53
-.L5698      jsr L5637              ; 20 37 56
+.L5698      jsr vdu_rdch           ; 20 37 56
 
             cmp #$7F               ; Backspace
             beq L56CE              ; F0 2F
@@ -834,7 +865,8 @@ ENDIF
 
             rts                    ; 60
 
-.L5715      EQUW L53D2,L5637
+.L5715      EQUW vdu_wrch
+            EQUW vdu_rdch
 
             lda #$18               ; A9 18
             sta L023D              ; 8D 3D 02
