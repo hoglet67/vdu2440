@@ -344,6 +344,7 @@ ENDIF
 ;--------------------------------------------
 
 .vdu_wrch
+{
             jsr LFEFB              ; 20 FB FE
             php                    ; 08
             pha                    ; 48
@@ -352,18 +353,18 @@ ENDIF
             stx L00E4              ; 86 E4
 
             bit LB001              ; Check CTRL/SHIFT
-            bmi L53E5              ; SHIFT
-            bvs L53E5              ; CTRL
+            bmi L1                 ; SHIFT
+            bvs L1                 ; CTRL
 
             jsr LFB8A              ; 20 8A FB
 
-.L53E5      ldy #$00               ; A0 00
+.L1         ldy #$00               ; A0 00
 
             cmp #$13               ; CTRL-3 VDU32x16
-            beq L53FB              ; F0 10
+            beq L2                 ; F0 10
 
             cmp #$14               ; CTRL-4 VDU40x24
-            bne L5400              ; D0 11
+            bne L3                 ; D0 11
 
             lda #$AA               ; A9 AA
             sta L03FE              ; 8D FE 03
@@ -373,51 +374,54 @@ ENDIF
 
 ; Entry VDU32x16
 
-.L53FB      sty LB000              ; 8C 00 B0
+.L2         sty LB000              ; 8C 00 B0
             lda #$0C               ; A9 0C
 
 ; Entry VDU40x24
 
-.L5400      ldy LB000              ; AC 00 B0
-            bmi L5408              ; 30 03
+.L3         ldy LB000              ; AC 00 B0
+            bmi L4                 ; 30 03
             jmp LFE5C              ; 4C 5C FE
 
-.L5408      jsr L540E              ; 20 0E 54
+.L4         jsr L5                 ; 20 0E 54
             jmp LFE5F              ; 4C 5F FE
 
-.L540E      cmp #$15               ; C9 15
-            beq L5417              ; F0 05
+.L5         cmp #$15               ; C9 15
+            beq L6                 ; F0 05
 
             cmp #$06               ; C9 06
-            bne L541A              ; D0 04
+            bne L7                 ; D0 04
             clc                    ; 18
-.L5417      jmp LFD11              ; 4C 11 FD
+.L6         jmp LFD11              ; 4C 11 FD
 
-.L541A
-;            ldy L00E0              ; A4 E0
-;            bmi L5445              ; 30 27
+.L7
+;           ldy L00E0              ; A4 E0
+;           bmi L5445              ; 30 27  ;; this was an RTS
             pha                    ; 48
-            jsr L5431              ; 20 31 54
+            jsr inv_cursor         ; 20 31 54
             pla                    ; 68
             cmp #$20               ; C9 20
-            bcc L5469              ; 90 42
+            bcc ctrl_char          ; 90 42
             cmp #$7F               ; C9 7F
-            beq L5489              ; F0 5E
-            jsr L5494              ; 20 94 54
+            beq del_char           ; F0 5E
+            jsr norm_char          ; 20 94 54
             jsr ctrl_09            ; 20 23 53
-.L5431      ldy #$E0               ; A0 E0
+}
+
+.inv_cursor
+{           ldy #$E0               ; A0 E0
             lda L00E1              ; A5 E1
-            beq L5462              ; F0 2B
+            beq L3                 ; F0 2B
             cmp #$01               ; C9 01
-            beq L5454              ; F0 19
+            beq L2                 ; F0 19
             cmp #$02               ; C9 02
-            beq L5446              ; F0 07
+            beq L1                 ; F0 07
             lda (L00DE),Y          ; B1 DE
             eor #$3F               ; 49 3F
             sta (L00DE),Y          ; 91 DE
-.L5445      rts                    ; 60
+            rts                    ; 60
 
-.L5446      lda (L00DE),Y          ; B1 DE
+.L1         lda (L00DE),Y          ; B1 DE
             eor #$0F               ; 49 0F
             sta (L00DE),Y          ; 91 DE
             iny                    ; C8
@@ -426,7 +430,7 @@ ENDIF
             sta (L00DE),Y          ; 91 DE
             rts                    ; 60
 
-.L5454      lda (L00DE),Y          ; B1 DE
+.L2         lda (L00DE),Y          ; B1 DE
             eor #$03               ; 49 03
             sta (L00DE),Y          ; 91 DE
             iny                    ; C8
@@ -435,40 +439,50 @@ ENDIF
             sta (L00DE),Y          ; 91 DE
             rts                    ; 60
 
-.L5462      lda (L00DE),Y          ; B1 DE
+.L3         lda (L00DE),Y          ; B1 DE
             eor #$FC               ; 49 FC
             sta (L00DE),Y          ; 91 DE
             rts                    ; 60
+}
 
-.L5469      cmp #$07               ; C9 07
-            bne L5473              ; D0 06
+.ctrl_char
+{
+            cmp #$07               ; C9 07
+            bne L2                 ; D0 06
             jsr LFD1A              ; 20 1A FD
-.L5470      jmp L5431              ; 4C 31 54
+.L1         jmp inv_cursor         ; 4C 31 54
 
-.L5473      ldx #$09               ; A2 09
+.L2         ldx #$09               ; A2 09
             jsr LFEC5              ; 20 C5 FE
-            bne L5470              ; D0 F6
+            bne L1                 ; D0 F6
 
             lda ctrl_table,X       ; BD 00 53
             sta L00E2              ; 85 E2
             lda #>ctrl_table       ; A9 53
             sta L00E3              ; 85 E3
             jsr LFEC1              ; 20 C1 FE
-            jmp L5431              ; 4C 31 54
+            jmp inv_cursor         ; 4C 31 54
+}
 
-.L5489      jsr ctrl_08            ; 20 0A 53
+.del_char
+{
+            jsr ctrl_08            ; 20 0A 53
             lda #$20               ; A9 20
-            jsr L5494              ; 20 94 54
-            jmp L5431              ; 4C 31 54
-.L5494      pha                    ; 48
+            jsr norm_char          ; 20 94 54
+            jmp inv_cursor         ; 4C 31 54
+}
+
+.norm_char
+{
+            pha                    ; 48
             and #$1F               ; 29 1F
             sta L00E2              ; 85 E2
             pla                    ; 68
             rol A                  ; 2A
             ldx #$00               ; A2 00
-            bcc L54A0              ; 90 01
+            bcc L1                 ; 90 01
             dex                    ; CA
-.L54A0      stx L0082              ; 86 82
+.L1         stx L0082              ; 86 82
             lsr A                  ; 4A
             lsr A                  ; 4A
             lsr A                  ; 4A
@@ -480,68 +494,72 @@ ENDIF
             sta L00E3              ; 85 E3
             ldy #$00               ; A0 00
             lda L00E1              ; A5 E1
-            beq L54EC              ; F0 39
+            beq L6                 ; F0 39
             cmp #$01               ; C9 01
-            beq L54F8              ; F0 41
+            beq L8                 ; F0 41
             cmp #$02               ; C9 02
-            bne L54DE              ; D0 23
+            bne L4                 ; D0 23
             lda #$0F               ; A9 0F
             sta L0081              ; 85 81
-.L54BF      lda (L00E2),Y          ; B1 E2
+.L2         lda (L00E2),Y          ; B1 E2
             lsr A                  ; 4A
             lsr A                  ; 4A
             lsr A                  ; 4A
             lsr A                  ; 4A
-            jsr L551B              ; 20 1B 55
-            bcc L54BF              ; 90 F5
+            jsr wrch1              ; 20 1B 55
+            bcc L2                 ; 90 F5
             inc L00DE              ; E6 DE
             lda #$C0               ; A9 C0
             sta L0081              ; 85 81
-.L54D0      lda (L00E2),Y          ; B1 E2
+.L3         lda (L00E2),Y          ; B1 E2
             asl A                  ; 0A
             asl A                  ; 0A
             asl A                  ; 0A
             asl A                  ; 0A
-            jsr L551B              ; 20 1B 55
-            bcc L54D0              ; 90 F5
+            jsr wrch1              ; 20 1B 55
+            bcc L3                 ; 90 F5
             dec L00DE              ; C6 DE
             rts                    ; 60
-.L54DE      lda #$3F               ; A9 3F
+.L4         lda #$3F               ; A9 3F
             sta L0081              ; 85 81
-.L54E2      lda (L00E2),Y          ; B1 E2
+.L5         lda (L00E2),Y          ; B1 E2
             lsr A                  ; 4A
             lsr A                  ; 4A
-            jsr L551B              ; 20 1B 55
-            bcc L54E2              ; 90 F7
+            jsr wrch1              ; 20 1B 55
+            bcc L5                 ; 90 F7
             rts                    ; 60
-.L54EC      lda #$FC               ; A9 FC
+.L6         lda #$FC               ; A9 FC
             sta L0081              ; 85 81
-.L54F0      lda (L00E2),Y          ; B1 E2
-            jsr L551B              ; 20 1B 55
-            bcc L54F0              ; 90 F9
+.L7         lda (L00E2),Y          ; B1 E2
+            jsr wrch1              ; 20 1B 55
+            bcc L7                 ; 90 F9
             rts                    ; 60
-.L54F8      lda #$03               ; A9 03
+.L8         lda #$03               ; A9 03
             sta L0081              ; 85 81
-.L54FC      lda (L00E2),Y          ; B1 E2
+.L9         lda (L00E2),Y          ; B1 E2
             lsr A                  ; 4A
             lsr A                  ; 4A
             lsr A                  ; 4A
             lsr A                  ; 4A
             lsr A                  ; 4A
             lsr A                  ; 4A
-            jsr L551B              ; 20 1B 55
-            bcc L54FC              ; 90 F3
+            jsr wrch1              ; 20 1B 55
+            bcc L9                 ; 90 F3
             inc L00DE              ; E6 DE
             lda #$F0               ; A9 F0
             sta L0081              ; 85 81
-.L550F      lda (L00E2),Y          ; B1 E2
+.L10        lda (L00E2),Y          ; B1 E2
             asl A                  ; 0A
             asl A                  ; 0A
-            jsr L551B              ; 20 1B 55
-            bcc L550F              ; 90 F7
+            jsr wrch1              ; 20 1B 55
+            bcc L10                ; 90 F7
             dec L00DE              ; C6 DE
             rts                    ; 60
-.L551B      jsr L552E              ; 20 2E 55
+}
+
+.wrch1
+{
+            jsr mask_eor           ; 20 2E 55
             lda L0081              ; A5 81
             eor #$FF               ; 49 FF
             and (L00DE),Y          ; 31 DE
@@ -552,29 +570,38 @@ ENDIF
             adc #$20               ; 69 20
             tay                    ; A8
             rts                    ; 60
+}
 
-.L552E      bit L008F              ; 24 8F
-            bpl L5534              ; 10 02
+.mask_eor
+{
+            bit L008F              ; 24 8F
+            bpl L1                 ; 10 02
             eor #$FF               ; 49 FF
-.L5534      eor L0082              ; 45 82
+.L1         eor L0082              ; 45 82
             and L0081              ; 25 81
             sta L0080              ; 85 80
             rts                    ; 60
+}
 
-.L553B      lda #$00               ; A9 00
+.L553B
+{
+            lda #$00               ; A9 00
             sta L0082              ; 85 82
-            jsr L5552              ; 20 52 55
+            jsr read_font          ; 20 52 55
             tay                    ; A8
-            bne L5551              ; D0 0C
+            bne L2                 ; D0 0C
             dec L0082              ; C6 82
-            jsr L5552              ; 20 52 55
+            jsr read_font          ; 20 52 55
             tay                    ; A8
-            bne L554F              ; D0 02
+            bne L1                 ; D0 02
             lda #$BF               ; A9 BF
-.L554F      eor #$80               ; 49 80
-.L5551      rts                    ; 60
+.L1         eor #$80               ; 49 80
+.L2         rts                    ; 60
+}
 
-.L5552      lda #>font_data        ; A9 50
+.read_font
+{
+            lda #>font_data        ; A9 50
             ldy #<font_data        ; A0 00
             sta L00E3              ; 85 E3
             sty L00E2              ; 84 E2
@@ -586,13 +613,20 @@ ENDIF
             beq L55D2              ; F0 6C
             lda #$3F               ; A9 3F
             sta L0081              ; 85 81
-.L556A      lda (L00E2),Y          ; B1 E2
+}
+.L556A
+{
+            lda (L00E2),Y          ; B1 E2
             lsr A                  ; 4A
             lsr A                  ; 4A
             jsr L5608              ; 20 08 56
             bne L5581              ; D0 0E
             bcc L556A              ; 90 F5
-.L5575      lda L00E3              ; A5 E3
+}           ;; fall through to
+
+.L5575
+{
+            lda L00E3              ; A5 E3
             sbc #$4F               ; E9 4F
             asl A                  ; 0A
             asl A                  ; 0A
@@ -601,10 +635,17 @@ ENDIF
             asl A                  ; 0A
             ora L00E2              ; 05 E2
             rts                    ; 60
-.L5581      jsr L5621              ; 20 21 56
+}
+
+.L5581
+{
+            jsr L5621              ; 20 21 56
             bcc L556A              ; 90 E4
             rts                    ; 60
-.L5587      lda #$FC               ; A9 FC
+}
+
+.L5587
+{           lda #$FC               ; A9 FC
             sta L0081              ; 85 81
 .L558B      lda (L00E2),Y          ; B1 E2
             jsr L5608              ; 20 08 56
@@ -614,8 +655,11 @@ ENDIF
 .L5596      jsr L5621              ; 20 21 56
             bcc L558B              ; 90 F0
             rts                    ; 60
+}
 
-.L559C      lda #$03               ; A9 03
+.L559C
+{
+            lda #$03               ; A9 03
             sta L0081              ; 85 81
 .L55A0      lda (L00E2),Y          ; B1 E2
             lsr A                  ; 4A
@@ -645,8 +689,11 @@ ENDIF
             dec L00DE              ; C6 DE
             bcc L559C              ; 90 CB
             rts                    ; 60
+}
 
-.L55D2      lda #$0F               ; A9 0F
+.L55D2
+{
+            lda #$0F               ; A9 0F
             sta L0081              ; 85 81
 .L55D6      lda (L00E2),Y          ; B1 E2
             lsr A                  ; 4A
@@ -671,14 +718,17 @@ ENDIF
             jsr L5575              ; 20 75 55
             dec L00DE              ; C6 DE
             rts                    ; 60
-
-.L55FE      inc L00DE              ; E6 DE
+.L55FE
+            inc L00DE              ; E6 DE
 .L5600      jsr L5621              ; 20 21 56
             dec L00DE              ; C6 DE
             bcc L55D2              ; 90 CB
             rts                    ; 60
+}
 
-.L5608      jsr L552E              ; 20 2E 55
+.L5608
+{
+            jsr mask_eor           ; 20 2E 55
             lda (L00DE),Y          ; B1 DE
             cpy #$E0               ; C0 E0
             bcc L5613              ; 90 02
@@ -692,8 +742,11 @@ ENDIF
             tay                    ; A8
             lda L0080              ; A5 80
             rts                    ; 60
+}
 
-.L5621      ldy #$00               ; A0 00
+.L5621
+{
+            ldy #$00               ; A0 00
             inc L00E2              ; E6 E2
             lda L00E2              ; A5 E2
             cmp #$20               ; C9 20
@@ -705,12 +758,14 @@ ENDIF
             bcc L5636              ; 90 01
             tya                    ; 98
 .L5636      rts                    ; 60
+}
 
 ;--------------------------------------------
 ; Read vector #20A
 ;--------------------------------------------
 
 .vdu_rdch
+{
             php                    ; 08
             cld                    ; D8
             stx L00E4              ; 86 E4
@@ -751,15 +806,21 @@ ENDIF
             bpl L5675              ; 10 F8
             jsr L553B              ; 20 3B 55
             jmp LFE60              ; 4C 60 FE
+}
 
 ; Cursor keys
 
-.L5683      and #$05               ; 29 05
+.L5683
+{
+            and #$05               ; 29 05
             rol LB001              ; 2E 01 B0
             rol A                  ; 2A
             jmp LFE60              ; 4C 60 FE
+}
 
-.L568C      lda #$40               ; A9 40
+.L568C
+{
+            lda #$40               ; A9 40
             eor L008F              ; 45 8F
             sta L008F              ; 85 8F
 
@@ -793,8 +854,8 @@ ENDIF
             beq L568C              ; F0 D1
 
             jsr LFFF4              ; 20 F4 FF
-
 .L56BE      jmp L5692              ; 4C 92 56
+
 
 ; Space
 
@@ -838,17 +899,19 @@ ENDIF
             eor #$F0               ; 49 F0
             sta LB000              ; 8D 00 B0
             jmp L5692              ; 4C 92 56
+}
 
 ;--------------------------------------------
 ; Init entry
 ;--------------------------------------------
 
 .L56FE
+{
             ldy #$03               ; A0 03
-.L5700      lda L5715,Y            ; B9 15 57
+.L1         lda L2,Y               ; B9 15 57
             sta L0208,Y            ; 99 08 02
             dey                    ; 88
-            bpl L5700              ; 10 F7
+            bpl L1                 ; 10 F7
 
             iny                    ; C8
             sty L008F              ; 84 8F
@@ -858,15 +921,18 @@ ENDIF
             lda #$1E               ; A9 1E
             sta L008E              ; 85 8E
 
-            lda #$14                ; Switch to VDU40x24
+            lda #$14               ; Switch to VDU40x24
             jsr LFFF4
-            lda #$1b                ; Execute ESCAPE
+            lda #$1b               ; Execute ESCAPE
             jsr LFFF4
 
             rts                    ; 60
-
-.L5715      EQUW vdu_wrch
+.L2
+            EQUW vdu_wrch
             EQUW vdu_rdch
+}
+
+;; BELOW THIS POINT IS JUNK
 
             lda #$18               ; A9 18
             sta L023D              ; 8D 3D 02
