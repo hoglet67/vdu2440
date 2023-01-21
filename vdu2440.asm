@@ -1,8 +1,12 @@
 INCLUDE_ATM_HDR =? 1
 
-asm_code = $7800
-
 INCLUDE_KEES =? 0
+
+IF INCLUDE_KEES
+asm_code = $7800
+ELSE
+asm_code = $5000
+ENDIF
 
 ;
 ; Code equates
@@ -56,7 +60,7 @@ LFFF4       = $FFF4
 IF (INCLUDE_ATM_HDR)
    org asm_code - 22
 .start_asm
-   EQUS "VDU"
+   EQUS "VDU2440"
    org asm_code - 6
    EQUW asm_code
    EQUW L56FE
@@ -165,6 +169,8 @@ ENDIF
             EQUB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
             EQUB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
             EQUB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FC
+
+.font_end
 
 .ctrl_table
 
@@ -638,7 +644,7 @@ ENDIF
 .L5575
 {
             lda L00E3              ; A5 E3
-            sbc #$4F               ; E9 4F
+            sbc #((>font_end)-4)   ; E9 4F
             asl A                  ; 0A
             asl A                  ; 0A
             asl A                  ; 0A
@@ -834,8 +840,10 @@ ENDIF
             lda #$40               ; A9 40
             eor L008F              ; 45 8F
             sta L008F              ; 85 8F
+}
 
-.L5692      cpy #$00               ; C0 00
+.L5692
+{           cpy #$00               ; C0 00
             bne L5698              ; D0 02
             sty L0053              ; 84 53
 .L5698      jsr vdu_rdch           ; 20 37 56
@@ -940,7 +948,11 @@ ENDIF
             rts                    ; 60
 .L2
             EQUW vdu_wrch
+IF INCLUDE_KEES
             EQUW vdu_rdch
+ELSE
+            EQUW L5692
+ENDIF
 }
 
 ;;;; BELOW THIS POINT IS JUNK
