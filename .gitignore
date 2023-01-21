@@ -1,3 +1,6 @@
 #*
 *~
 VDU2440
+VDU2440.orig
+*.lst
+not_in_git/
