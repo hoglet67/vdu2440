@@ -2,6 +2,8 @@ INCLUDE_ATM_HDR =? 1
 
 asm_code = $7800
 
+INCLUDE_KEES =? 0
+
 ;
 ; Code equates
 ;
@@ -179,11 +181,13 @@ ENDIF
 
 .ctrl_08
 {
+IF INCLUDE_KEES
             dec L00E0
             bpl L1
             lda #39
             sta L00E0
 .L1
+ENDIF
             dec L00E1              ; C6 E1
             bpl L2                 ; 10 04
             lda #$03               ; A9 03
@@ -201,6 +205,7 @@ ENDIF
 
 .ctrl_09
 {
+IF INCLUDE_KEES
             inc L00E0
             lda L00E0
             cmp #40
@@ -208,6 +213,7 @@ ENDIF
             lda #0
             sta L00E0
 .L1
+ENDIF
             inc L00E1              ; E6 E1
             lda L00E1              ; A5 E1
             cmp #$01               ; C9 01
@@ -263,7 +269,9 @@ ENDIF
             lda #$00               ; A9 00
             sta L00E1              ; 85 E1
             sta L00DE              ; 85 DE
+IF INCLUDE_KEES
             sta L00E0
+ENDIF
             rts                    ; 60
 }
 
@@ -395,8 +403,10 @@ ENDIF
 .L6         jmp LFD11              ; 4C 11 FD
 
 .L7
-;           ldy L00E0              ; A4 E0
-;           bmi L5445              ; 30 27  ;; this was an RTS
+IF not(INCLUDE_KEES)
+            ldy L00E0              ; A4 E0
+            bmi L5445              ; 30 27  ;; this was an RTS
+ENDIF
             pha                    ; 48
             jsr inv_cursor         ; 20 31 54
             pla                    ; 68
@@ -419,6 +429,7 @@ ENDIF
             lda (L00DE),Y          ; B1 DE
             eor #$3F               ; 49 3F
             sta (L00DE),Y          ; 91 DE
+.*L5445
             rts                    ; 60
 
 .L1         lda (L00DE),Y          ; B1 DE
@@ -920,54 +931,55 @@ ENDIF
             sta L008D              ; 85 8D
             lda #$1E               ; A9 1E
             sta L008E              ; 85 8E
-
+IF INCLUDE_KEES
             lda #$14               ; Switch to VDU40x24
             jsr LFFF4
             lda #$1b               ; Execute ESCAPE
             jsr LFFF4
-
+ENDIF
             rts                    ; 60
 .L2
             EQUW vdu_wrch
             EQUW vdu_rdch
 }
 
-;; BELOW THIS POINT IS JUNK
+;;;; BELOW THIS POINT IS JUNK
+;;
+;;            lda #$18               ; A9 18
+;;            sta L023D              ; 8D 3D 02
+;;            lda #$1E               ; A9 1E
+;;            sta L023E              ; 8D 3E 02
+;;            rts                    ; 60
+;;
+;;            EQUB $D9,$53,$9D,$56,$50,$2E,$24,$31
+;;            EQUB $32,$20,$3B,$50,$2E,$22,$20,$20
+;;            EQUB $20,$20,$20,$20,$20,$20,$80,$64
+;;            EQUB $69,$73,$6B,$80,$74,$6F,$80,$64
+;;            EQUB $69,$73,$6B,$80,$22,$20,$0D,$00
+;;            EQUB $1E,$46,$3D,$3F,$31,$38,$2A,$32
+;;            EQUB $35,$36,$2B,$31,$3B,$44,$4F,$46
+;;            EQUB $3D,$46,$2B,$4C,$2E,$28,$46,$2B
+;;            EQUB $32,$29,$2B,$33,$3B,$55,$2E,$46
+;;            EQUB $3F,$32,$3D,$43,$48,$22,$66,$22
+;;            EQUB $3B,$46,$3D,$46,$2B,$33,$3B,$58
+;;            EQUB $3D,$46,$0D,$00,$28,$24,$58,$3D
+;;            EQUB $22,$2A,$4C,$4F,$41,$44,$22,$22
+;;            EQUB $22,$3B,$58,$3D,$58,$2B,$4C,$2E
+;;            EQUB $58,$0D,$00,$32,$50,$2E,$27,$27
+;;            EQUB $27,$22,$3C,$43,$52,$3E,$20,$3D
+;;            EQUB $20,$41,$42,$4F,$52,$54,$22,$0D
+;;            EQUB $00,$3C,$4C,$49,$2E,$23,$45,$30
+;;            EQUB $30,$30,$3B,$2A,$4E,$4F,$4D,$4F
+;;            EQUB $4E,$0D,$00,$46,$49,$4E,$2E,$27
+;;            EQUB $22,$46,$49,$4C,$45,$20,$4E,$41
+;;            EQUB $4D,$45,$22,$24,$58,$3B,$49,$46
+;;            EQUB $3F,$58,$3D,$23,$30,$44,$20,$3B
+;;            EQUB $21,$46,$3D,$23,$46,$46,$30,$44
+;;            EQUB $3B,$50,$2E,$24,$31,$32,$3B,$45
+;;            EQUB $2E,$0D,$00,$50,$47,$4F,$53,$2E
+;;            EQUB $61,$0D,$00,$5A,$47,$4F,$53,$2E
+;;            EQUB $66,$3B,$50,$FF
 
-            lda #$18               ; A9 18
-            sta L023D              ; 8D 3D 02
-            lda #$1E               ; A9 1E
-            sta L023E              ; 8D 3E 02
-            rts                    ; 60
-
-            EQUB $D9,$53,$9D,$56,$50,$2E,$24,$31
-            EQUB $32,$20,$3B,$50,$2E,$22,$20,$20
-            EQUB $20,$20,$20,$20,$20,$20,$80,$64
-            EQUB $69,$73,$6B,$80,$74,$6F,$80,$64
-            EQUB $69,$73,$6B,$80,$22,$20,$0D,$00
-            EQUB $1E,$46,$3D,$3F,$31,$38,$2A,$32
-            EQUB $35,$36,$2B,$31,$3B,$44,$4F,$46
-            EQUB $3D,$46,$2B,$4C,$2E,$28,$46,$2B
-            EQUB $32,$29,$2B,$33,$3B,$55,$2E,$46
-            EQUB $3F,$32,$3D,$43,$48,$22,$66,$22
-            EQUB $3B,$46,$3D,$46,$2B,$33,$3B,$58
-            EQUB $3D,$46,$0D,$00,$28,$24,$58,$3D
-            EQUB $22,$2A,$4C,$4F,$41,$44,$22,$22
-            EQUB $22,$3B,$58,$3D,$58,$2B,$4C,$2E
-            EQUB $58,$0D,$00,$32,$50,$2E,$27,$27
-            EQUB $27,$22,$3C,$43,$52,$3E,$20,$3D
-            EQUB $20,$41,$42,$4F,$52,$54,$22,$0D
-            EQUB $00,$3C,$4C,$49,$2E,$23,$45,$30
-            EQUB $30,$30,$3B,$2A,$4E,$4F,$4D,$4F
-            EQUB $4E,$0D,$00,$46,$49,$4E,$2E,$27
-            EQUB $22,$46,$49,$4C,$45,$20,$4E,$41
-            EQUB $4D,$45,$22,$24,$58,$3B,$49,$46
-            EQUB $3F,$58,$3D,$23,$30,$44,$20,$3B
-            EQUB $21,$46,$3D,$23,$46,$46,$30,$44
-            EQUB $3B,$50,$2E,$24,$31,$32,$3B,$45
-            EQUB $2E,$0D,$00,$50,$47,$4F,$53,$2E
-            EQUB $61,$0D,$00,$5A,$47,$4F,$53,$2E
-            EQUB $66,$3B,$50,$FF
 .end_asm
 
 SAVE "VDU2440", start_asm, end_asm
